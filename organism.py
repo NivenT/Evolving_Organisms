@@ -58,7 +58,7 @@ class Organism(object):
     def update(self, smell, dt):
         output = self.brain.step([smell[0],smell[1],self.hunger/100-1])
         self.orientation += output[0]*dt
-        self.center = move(self.center, scale(self.getForward(), 20*dt))
+        self.center = move(self.center, scale(self.getForward(), 30*dt))
         self.age += dt
         self.hunger = max(self.hunger-dt,0)
         
