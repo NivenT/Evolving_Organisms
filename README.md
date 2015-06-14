@@ -22,3 +22,4 @@ The only possible mutation is adding a number from -1 to 1 to one of the weights
 * I only recently finished this so I have not had much time to extensively test it.
 * Organisms generally move in circles at first. After a few hours, however, some will display more intelligent behaviors. i.e turning towards food that is near them
 * There currently is not a fast forward feature. The simulation cannot be sped up.
+* Requires Pygame and Numpy

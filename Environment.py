@@ -13,12 +13,11 @@ class Food(object):
         self.radius = 5
         self.type = int(round(rnd.uniform(0,2)))
         self.color = {0: (255,0,0), 1: (0,255,0), 2: (0,0,255)}[self.type]
-        self.age = 0
         self.lifespan = rnd.randint(50,200)
     def draw(self, screen):
         pg.draw.circle(screen, self.color, self.center, self.radius)
     def update(self, dt):
-        self.age += dt
+        self.lifespan -= dt
         
 class Environment(object):
     def __init__(self):
@@ -37,10 +36,10 @@ class Environment(object):
         allDead = True
         for food in self.food:
             food.update(dt)
-            if food.age > food.lifespan:
+            if 0 > food.lifespan:
                 self.food.remove(food)
-        if clock() - self.lastFoodUpdate >= 20:
-            self.food += [Food() for x in xrange(rnd.randint(1,3))]
+        if clock() - self.lastFoodUpdate >= 10:
+            self.food += [Food() for x in xrange(rnd.randint(1,5))]
             self.lastFoodUpdate = clock()
         for org in self.orgs:
             if abs(org.hunger-100) < 100:
@@ -81,10 +80,10 @@ class Environment(object):
         self.lastFoodUpdate = clock()
 
     def crossover(self, mom, dad):
-        pivot = rnd.randint(0,len(mom.getGenome()))
+        pivot = rnd.randint(0,50)
         genome = mom.getGenome()[:pivot] + dad.getGenome()[pivot:]
         if rnd.uniform(0,1) <= .1:
-                genome[rnd.randint(0,50)] += rnd.uniform(-1,1)
+                genome[rnd.randint(0,50)] += rnd.uniform(-2,2)
         rnn = RNN(3,5,1)
         rnn.W_hx = np.array(partition(genome[:15],3))
         rnn.W_hh = np.array(partition(genome[15:40],5))
