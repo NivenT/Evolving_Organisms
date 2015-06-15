@@ -24,7 +24,7 @@ class Organism(object):
         self.center = (int(rnd.uniform(0,800)), int(rnd.uniform(0,600)))
         self.orientation = 0
         self.radius = 8
-        self.brain = args.get('brain',RNN(3,5,1))
+        self.brain = args.get('brain',RNN(3,5,2))
         self.hunger = 100
         self.age = 0
     def getColor(self):
@@ -58,7 +58,7 @@ class Organism(object):
     def update(self, smell, dt):
         output = self.brain.step([smell[0],smell[1],self.hunger/100-1])
         self.orientation += output[0]*dt
-        self.center = move(self.center, scale(self.getForward(), 30*dt))
+        self.center = move(self.center, scale(self.getForward(), (output[1]+1)*15*dt))
         self.age += dt
         self.hunger = max(self.hunger-dt,0)
         
