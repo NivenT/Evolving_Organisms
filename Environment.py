@@ -51,8 +51,8 @@ class Environment(object):
                         org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
                         self.food.remove(food)
                     else:
-                        leftSmell += {0: -2, 1: 1, 2: 3}[food.type]*10*np.exp(-distSquared(food.center,org.getLeftNostril())/100)
-                        rightSmell += {0: -2, 1: 1, 2: 3}[food.type]*10*np.exp(-distSquared(food.center,org.getRightNostril())/100)
+                        leftSmell += {0: -2, 1: 1, 2: 3}[food.type]*5*np.exp(-distSquared(food.center,org.getLeftNostril())/(10**6))
+                        rightSmell += {0: -2, 1: 1, 2: 3}[food.type]*5*np.exp(-distSquared(food.center,org.getRightNostril())/(10**6))
                 org.update((leftSmell,rightSmell), dt)
         if allDead:
             sleep(3)
@@ -80,15 +80,15 @@ class Environment(object):
         self.lastFoodUpdate = clock()
 
     def crossover(self, mom, dad):
-        pivot = rnd.randint(0,50)
+        pivot = rnd.randint(0,56)
         genome = mom.getGenome()[:pivot] + dad.getGenome()[pivot:]
         if rnd.uniform(0,1) <= .1:
-                genome[rnd.randint(0,50)] += rnd.uniform(-2,2)
+                genome[rnd.randint(0,56)] += rnd.uniform(-2,2)
         rnn = RNN(3,5,1)
         rnn.W_hx = np.array(partition(genome[:15],3))
         rnn.W_hh = np.array(partition(genome[15:40],5))
-        rnn.W_ah = np.array(partition(genome[40:45],5))
-        rnn.b_h  = np.array(genome[45:50])
-        rnn.b_a  = np.array(genome[50:51])
+        rnn.W_ah = np.array(partition(genome[40:50],5))
+        rnn.b_h  = np.array(genome[50:55])
+        rnn.b_a  = np.array(genome[55:57])
         return Organism(brain=rnn)
         
