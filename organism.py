@@ -57,6 +57,7 @@ class Organism(object):
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smell, dt):
         output = self.brain.step([smell[0],smell[1],self.hunger/100-1])
+        #print [smell[0],smell[1],self.hunger/100-1]
         self.orientation += output[0]*dt
         self.center = move(self.center, scale(self.getForward(), (output[1]+1)*15*dt))
         self.age += dt
