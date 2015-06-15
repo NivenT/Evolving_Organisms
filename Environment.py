@@ -51,8 +51,8 @@ class Environment(object):
                         org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
                         self.food.remove(food)
                     else:
-                        leftSmell += {0: -2, 1: 1, 2: 3}[food.type]*5*np.exp(-distSquared(food.center,org.getLeftNostril())/(10**6))
-                        rightSmell += {0: -2, 1: 1, 2: 3}[food.type]*5*np.exp(-distSquared(food.center,org.getRightNostril())/(10**6))
+                        leftSmell += {0: -2, 1: 1, 2: 3}[food.type]*np.exp(-distSquared(food.center,org.getLeftNostril())/(10**4))
+                        rightSmell += {0: -2, 1: 1, 2: 3}[food.type]*np.exp(-distSquared(food.center,org.getRightNostril())/(10**4))
                 org.update((leftSmell,rightSmell), dt)
         if allDead:
             sleep(3)
