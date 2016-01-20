@@ -23,8 +23,9 @@ class Organism(object):
     def __init__(self,**args):
         self.center = (int(rnd.uniform(0,800)), int(rnd.uniform(0,600)))
         self.orientation = 0
+        self.speed = 20
         self.radius = 8
-        self.brain = args.get('brain',RNN(7,5,2))
+        self.brain = args.get('brain',RNN(8,10,2))
         self.hunger = 100
         self.age = 0
     def getColor(self):
@@ -56,10 +57,12 @@ class Organism(object):
         noseEnd = move(noseStart,scale(noseDir,8))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
-        output = self.brain.step(smells+[self.hunger/100-1])
+        output = self.brain.step(smells+[self.hunger/100-1,self.speed/15-1])
         #print smells
         self.orientation += output[0]*dt
-        self.center = move(self.center, scale(self.getForward(), (output[1]+1)*15*dt))
+        self.speed = np.clip(self.speed+output[1]*dt, 0, 30)
+        self.center = move(self.center, scale(self.getForward(), self.speed*dt))
+        self.center = (self.center[0]%800,self.center[1]%600)
         self.age += dt
         self.hunger = max(self.hunger-dt,0)
         

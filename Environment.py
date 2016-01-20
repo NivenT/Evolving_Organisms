@@ -24,6 +24,7 @@ class Environment(object):
         self.orgs = [Organism() for x in xrange(30)]
         self.food = [Food() for x in xrange(25)]
         self.lastFoodUpdate = 0
+        self.start = clock()
 
     def draw(self, screen):
         for org in self.orgs:
@@ -34,6 +35,8 @@ class Environment(object):
 
     def update(self, dt):
         allDead = True
+        #if rnd.uniform(0,1/dt) <= 1/(50-len(self.orgs)) and len(self.orgs) > 1:
+        #    self.orgs += [self.crossover(rnd.choice(self.orgs),rnd.choice(self.orgs))]
         for food in self.food:
             food.update(dt)
             if 0 > food.lifespan:
@@ -56,6 +59,8 @@ class Environment(object):
                 org.update(leftSmells+rightSmells, dt)
         if allDead:
             sleep(3)
+            durr = int(round(clock()-self.start))
+            print "Population survived for", durr/60, "minutes and", durr%60, "seconds"
             self.stepPopulation()
 
     def stepPopulation(self):
@@ -79,17 +84,22 @@ class Environment(object):
         self.orgs = newPop
         self.food = [Food() for x in xrange(25)]
         self.lastFoodUpdate = clock()
+        self.start = clock()
 
     def crossover(self, mom, dad):
-        pivot = rnd.randint(0,76)
+        pivot = rnd.choice([80,180,200,210])
         genome = mom.getGenome()[:pivot] + dad.getGenome()[pivot:]
-        if rnd.uniform(0,1) <= .1:
-                genome[rnd.randint(0,76)] += rnd.uniform(-2,2)
-        rnn = RNN(7,5,2)
-        rnn.W_hx = np.array(partition(genome[:35],7))
-        rnn.W_hh = np.array(partition(genome[35:60],5))
-        rnn.W_ah = np.array(partition(genome[60:70],5))
-        rnn.b_h  = np.array(genome[70:75])
-        rnn.b_a  = np.array(genome[75:77])
+
+        q = 1.-(1.-.1)**(1/212.)
+        for i in xrange(212):
+            if rnd.uniform(0,1) <= q:
+                genome[i] += rnd.uniform(-2,2)
+                
+        rnn = RNN(8,10,2)
+        rnn.W_hx = np.array(partition(genome[:80],8))
+        rnn.W_hh = np.array(partition(genome[80:180],10))
+        rnn.W_ah = np.array(partition(genome[180:200],10))
+        rnn.b_h  = np.array(genome[200:210])
+        rnn.b_a  = np.array(genome[210:212])
         return Organism(brain=rnn)
         
