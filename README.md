@@ -1,6 +1,8 @@
 # Evolving_Organisms
 Attempting to "evolve" intelligent behavior using genetic algorithms
 
+**This project is being rewritten so this readme will have to be redone as well. It is currently not completely accurate**
+
 ## Overview of the Program
 This program is a simulation of evolution of simple creatures. The user does not interact with the program in any way and simply watches as the creatures move around in their environment. When every creature has died, the program assigns each creature a fitness based on how long it lived. It then repopulates the environment by breeding the creatures from the previous generation in order to make creatures for the next generation. The probabily that a creature is selected for breeding is directly proportional to its fitness.
 

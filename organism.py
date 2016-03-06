@@ -1,15 +1,17 @@
 import random as rnd
 import pygame as pg
 from pygame.locals import *
-from RNN import *
+from Genotype import *
 
 def move(pos, direction):
     return (pos[0]+direction[0],pos[1]+direction[1])
 def scale(pos, factor):
     return (pos[0]*factor, pos[1]*factor)
 def rotate(direction, radians):
-    return (np.cos(radians)*direction[0]+np.sin(radians)*direction[1],
-            -np.sin(radians)*direction[0]+np.cos(radians)*direction[1])
+    c = np.cos(radians)
+    s = np.sin(radians)
+    return (c*direction[0] + s*direction[1],
+            -s*direction[0]+ c*direction[1])
 
 def flatten(lst):
     if len(lst)==0:
@@ -24,10 +26,13 @@ class Organism(object):
         self.center = (int(rnd.uniform(0,800)), int(rnd.uniform(0,600)))
         self.orientation = 0
         self.speed = 20
+        self.angSpeed = 0
         self.radius = 8
-        self.brain = args.get('brain',RNN(8,10,2))
         self.hunger = 100
-        self.age = 0
+        self.age = 0.
+
+        self.genome = args.get('genome', Genotype(8,2,0))
+        self.brain = self.genome.makeNet()
     def getColor(self):
         return map(lambda x: x*(1./50*self.hunger-1./10000*self.hunger*self.hunger),
             (255,255,0))
@@ -40,8 +45,7 @@ class Organism(object):
         noseDir = rotate(self.getForward(), np.pi/4)
         return move(self.center,scale(noseDir,self.radius+8))
     def getGenome(self):
-        return flatten([self.brain.W_hx.tolist(), self.brain.W_hh.tolist(), self.brain.W_ah.tolist(),
-                        self.brain.b_h.tolist(), self.brain.b_a.tolist()])
+        return self.genome
     def draw(self, screen):
         Black = (0,0,0)
         pg.draw.circle(screen, self.getColor(), map(int,self.center), self.radius)
@@ -57,12 +61,11 @@ class Organism(object):
         noseEnd = move(noseStart,scale(noseDir,8))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
-        output = self.brain.step(smells+[self.hunger/100-1,self.speed/15-1])
-        #print smells
-        self.orientation += output[0]*dt
+        output = self.brain.fire(smells+[1,self.speed/15-1])
+        self.angSpeed = np.clip(self.angSpeed+output[0]*dt, -.5, .5)
         self.speed = np.clip(self.speed+output[1]*dt, 0, 30)
+        self.orientation += self.angSpeed*dt
         self.center = move(self.center, scale(self.getForward(), self.speed*dt))
         self.center = (self.center[0]%800,self.center[1]%600)
         self.age += dt
-        self.hunger = max(self.hunger-dt,0)
-        
+        self.hunger = max(self.hunger-dt,0)  

@@ -35,10 +35,10 @@ class Screen(object):
 
     def loop(self):
         while not self.gameOver:
-            self.begin()
+            #self.begin()
             for event in pg.event.get():
                 self.handleEvent(event)
             self.update()
             self.display()
-            self.end()
+            #self.end()
         pg.display.quit()
