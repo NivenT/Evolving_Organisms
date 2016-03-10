@@ -33,12 +33,13 @@ class Organism(object):
         self.radius     = 6
         self.noseLength = 6
         self.tailLength = 18
+        self.color      = (255,255,0)
 
-        self.genome = args.get('genome', Genotype(8,2,0))
+        self.genome = args.get('genome', Genotype(9,2,0))
         self.brain = self.genome.makeNet()
     def getColor(self):
         return map(lambda x: x*(1./50*self.hunger-1./10000*self.hunger*self.hunger),
-            (255,255,0))
+            self.color)
     def getForward(self):
         return (np.cos(self.orientation), np.sin(self.orientation))
     def getLeftNostril(self):
@@ -68,11 +69,35 @@ class Organism(object):
         noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
-        output = self.brain.fire(smells+[1,self.speed/15-1])
+        output = self.brain.fire(smells+[self.hunger/100-1,self.speed/15-1,self.angSpeed*2])
         self.angSpeed = np.clip(self.angSpeed+output[0]*dt, -.5, .5)
         self.speed = np.clip(self.speed+output[1]*dt, 0, 30)
         self.orientation += self.angSpeed*dt
         self.center = move(self.center, scale(self.getForward(), self.speed*dt))
         #self.center = (self.center[0]%800,self.center[1]%600)
         self.age += dt
-        self.hunger = max(self.hunger-dt,0)  
+        self.hunger = max(self.hunger-dt,0)
+    # Returns a string represeing a graphviz graph of the organism's brain
+    def toGraph(self):
+        res = 'digraph {\n'
+        res += '\tNode0[label="left red smell (input)"];\n'
+        res += '\tNode1[label="left green smell (input)"];\n'
+        res += '\tNode2[label="left blue smell (input)"];\n'
+        res += '\tNode3[label="right red smell (input)"];\n'
+        res += '\tNode4[label="right green smell (input)"];\n'
+        res += '\tNode5[label="right blue smell (input)"];\n'
+        res += '\tNode6[label="hunger (input)"];\n'
+        res += '\tNode7[label="speed (input)"];\n'
+        res += '\tNode8[label="angular speed (input)"];\n'
+        res += '\tNode9[label="angular acceleration (output)"];\n'
+        res += '\tNode10[label="acceleration (output)"];\n'
+
+        b = self.brain
+        for x in xrange(b.hidSize):
+            res += '\tNode'+str(x+11)+';\n'
+        res += '\n'
+        for s in b.synapses:
+            res += '\tNode'+str(s.fro)+'->Node'+str(s.to)+'[label="'+str(s.w)+'"];\n'
+        res += '}'
+        return res
+                               

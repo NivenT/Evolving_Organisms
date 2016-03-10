@@ -17,6 +17,11 @@ class Screen(object):
     def handleEvent(self, event):
         if event.type == QUIT:
             self.gameOver = True
+        elif event.type == MOUSEBUTTONDOWN:
+            mousePos = pg.mouse.get_pos()
+            self.env.checkClick(mousePos)
+        elif event.type == KEYDOWN:
+            self.env.keyPress(event.key)
 
     def display(self):
         self.screen.blit(self.background, (0,0))

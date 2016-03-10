@@ -87,23 +87,28 @@ class Environment(object):
         self.food = [Food() for x in xrange(40)]
         self.foodTimer = 800
         self.start = clock()
-
+        self.selected = -1
+        
         self.generation = 1
         self.nodeMutRate   = .1
         self.connMutRate   = .15
         self.weightMutRate = .2
         self.enableRate    = .25
+
+        self.species = []
         self.compatThresh = 2
         self.c1           = 1
         self.c2           = 1
         self.c3           = .4
 
-        self.species = []
-
     def draw(self, screen):
+        if self.selected > -1:
+            self.orgs[self.selected].color = (0,0,255)
         for org in self.orgs:
             if abs(org.hunger-100) < 100:
                 org.draw(screen)
+        if self.selected > -1:
+            self.orgs[self.selected].color = (255,255,0)
         for food in self.food:
             food.draw(screen)
 
@@ -160,6 +165,19 @@ class Environment(object):
             print 'Generation', self.generation
             print "\tPopulation survived for", durr/60, "minutes and", durr%60, "seconds"
             self.stepPopulation(dt)
+
+    def checkClick(self, pos):
+        self.selected = -1
+        squaredRadius = self.orgs[0].radius*self.orgs[0].radius
+        for x in xrange(len(self.orgs)):
+            if distSquared(self.orgs[x].center, pos) < squaredRadius:
+                self.selected = x
+
+    def keyPress(self, key):
+        if key == K_s and self.selected > -1:
+            f = open('brain.dot', 'w')
+            f.write(self.orgs[self.selected].toGraph())
+            f.close()
 
     def stepPopulation(self, dt):
         #Update species
@@ -247,4 +265,5 @@ class Environment(object):
         self.orgs = newPop[:len(self.orgs)]
         self.food = [Food() for x in xrange(40)]
         self.start = clock()
+        self.selected = -1
         self.generation += 1
