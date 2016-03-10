@@ -39,12 +39,12 @@ class Genotype(object):
         fromIndex = rng.randint(0,self.size()-1)
         toIndex = rng.randint(self.inSize, self.size()-1)
         weight = rng.gauss(0, 1)
-        self.addConnection(fromIndex, toIndex, weight, True)
+        return self.addConnection(fromIndex, toIndex, weight, True)
 
     def mutateAddNode(self):
         onConnections = [i for i in range(0,len(self.conn)) if self.conn[i].on]
         if len(onConnections) == 0:
-            return
+            return []
         
         connIndex = rng.choice(onConnections)
         self.conn[connIndex].on = False
@@ -53,6 +53,7 @@ class Genotype(object):
         self.addConnection(c.fro, self.size(), 1, True)
         self.addConnection(self.size(), c.to, c.w, True)
         self.hidSize += 1
+        return self.conn[-2:]
 
     def cross(self, mate, enableRate):
         dad = sorted(self.conn, key=lambda x: x.innov)

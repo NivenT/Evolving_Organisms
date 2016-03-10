@@ -27,9 +27,12 @@ class Organism(object):
         self.orientation = 0
         self.speed = 20
         self.angSpeed = 0
-        self.radius = 8
         self.hunger = 100
         self.age = 0.
+
+        self.radius     = 6
+        self.noseLength = 6
+        self.tailLength = 18
 
         self.genome = args.get('genome', Genotype(8,2,0))
         self.brain = self.genome.makeNet()
@@ -40,25 +43,29 @@ class Organism(object):
         return (np.cos(self.orientation), np.sin(self.orientation))
     def getLeftNostril(self):
         noseDir = rotate(self.getForward(), -np.pi/4)
-        return move(self.center,scale(noseDir,self.radius+8))
+        return move(self.center,scale(noseDir,self.radius+self.noseLength))
     def getRightNostril(self):
         noseDir = rotate(self.getForward(), np.pi/4)
-        return move(self.center,scale(noseDir,self.radius+8))
+        return move(self.center,scale(noseDir,self.radius+self.noseLength))
     def getGenome(self):
         return self.genome
     def draw(self, screen):
         Black = (0,0,0)
+        #Draw main body
         pg.draw.circle(screen, self.getColor(), map(int,self.center), self.radius)
+        #Draw tail
         tailStart = move(self.center,scale(self.getForward(),-self.radius))
-        tailEnd = move(tailStart,scale(self.getForward(),-24))
+        tailEnd = move(tailStart,scale(self.getForward(),-self.tailLength))
         pg.draw.line(screen, Black, tailStart, tailEnd)
+        #Draw right nostril
         noseDir = rotate(self.getForward(),np.pi/4)
         noseStart = move(self.center,scale(noseDir,self.radius))
-        noseEnd = move(noseStart,scale(noseDir,8))
+        noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
+        #Draw left nostril
         noseDir = rotate(self.getForward(),-np.pi/4)
         noseStart = move(self.center,scale(noseDir,self.radius))
-        noseEnd = move(noseStart,scale(noseDir,8))
+        noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
         output = self.brain.fire(smells+[1,self.speed/15-1])
@@ -66,6 +73,6 @@ class Organism(object):
         self.speed = np.clip(self.speed+output[1]*dt, 0, 30)
         self.orientation += self.angSpeed*dt
         self.center = move(self.center, scale(self.getForward(), self.speed*dt))
-        self.center = (self.center[0]%800,self.center[1]%600)
+        #self.center = (self.center[0]%800,self.center[1]%600)
         self.age += dt
         self.hunger = max(self.hunger-dt,0)  

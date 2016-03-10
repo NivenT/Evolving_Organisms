@@ -10,6 +10,7 @@ class Screen(object):
         self.gameOver = False
         self.time = 0
         self.dt = 1./30
+        self.fps = 60
 
         self.env = Environment()
 
@@ -30,15 +31,15 @@ class Screen(object):
 
     def end(self):
         elapsed = clock()-self.time
-        if elapsed < self.dt:
-            sleep(self.dt-elapsed)
+        if elapsed < 1./self.fps:
+            sleep(1./self.fps-elapsed)
 
     def loop(self):
         while not self.gameOver:
-            #self.begin()
+            self.begin()
             for event in pg.event.get():
                 self.handleEvent(event)
             self.update()
             self.display()
-            #self.end()
+            self.end()
         pg.display.quit()
