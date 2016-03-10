@@ -90,10 +90,10 @@ class Environment(object):
         self.selected = -1
         
         self.generation = 1
-        self.nodeMutRate   = .1
-        self.connMutRate   = .15
-        self.weightMutRate = .2
-        self.enableRate    = .25
+        self.nodeMutRate   = .7
+        self.connMutRate   = .8
+        self.weightMutRate = .75
+        self.enableRate    = .4
 
         self.species = []
         self.compatThresh = 2
@@ -173,8 +173,8 @@ class Environment(object):
             if distSquared(self.orgs[x].center, pos) < squaredRadius:
                 self.selected = x
 
-    def keyPress(self, key):
-        if key == K_s and self.selected > -1:
+    def saveSelected(self):
+        if self.selected > -1:
             f = open('brain.dot', 'w')
             f.write(self.orgs[self.selected].toGraph())
             f.close()

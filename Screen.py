@@ -11,6 +11,7 @@ class Screen(object):
         self.time = 0
         self.dt = 1./30
         self.fps = 60
+        self.paused = False
 
         self.env = Environment()
 
@@ -21,7 +22,10 @@ class Screen(object):
             mousePos = pg.mouse.get_pos()
             self.env.checkClick(mousePos)
         elif event.type == KEYDOWN:
-            self.env.keyPress(event.key)
+            if event.key == K_s:
+                self.env.saveSelected()
+            elif event.key == K_p:
+                self.paused = not self.paused
 
     def display(self):
         self.screen.blit(self.background, (0,0))
@@ -44,7 +48,8 @@ class Screen(object):
             self.begin()
             for event in pg.event.get():
                 self.handleEvent(event)
-            self.update()
+            if not self.paused:
+                self.update()
             self.display()
             self.end()
         pg.display.quit()
