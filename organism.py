@@ -35,7 +35,7 @@ class Organism(object):
         self.tailLength = 18
         self.color      = (255,255,0)
 
-        self.genome = args.get('genome', Genotype(9,2,0))
+        self.genome = args.get('genome', Genotype(8,2,0))
         self.brain = self.genome.makeNet()
     def getColor(self):
         return map(lambda x: x*(1./50*self.hunger-1./10000*self.hunger*self.hunger),
@@ -69,8 +69,8 @@ class Organism(object):
         noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
-        output = self.brain.fire(smells+[self.hunger/100-1,self.speed/15-1,self.angSpeed*2])
-        self.angSpeed = np.clip(self.angSpeed+output[0]*dt, -.5, .5)
+        output = self.brain.fire(smells+[self.hunger/100-1,self.speed/15-1])
+        self.angSpeed = output[0]
         self.speed = np.clip(self.speed+output[1]*dt, 0, 30)
         self.orientation += self.angSpeed*dt
         self.center = move(self.center, scale(self.getForward(), self.speed*dt))
@@ -88,13 +88,12 @@ class Organism(object):
         res += '\tNode5[label="right blue smell (input)"];\n'
         res += '\tNode6[label="hunger (input)"];\n'
         res += '\tNode7[label="speed (input)"];\n'
-        res += '\tNode8[label="angular speed (input)"];\n'
-        res += '\tNode9[label="angular acceleration (output)"];\n'
-        res += '\tNode10[label="acceleration (output)"];\n'
+        res += '\tNode8[label="angular speed (output)"];\n'
+        res += '\tNode9[label="acceleration (output)"];\n'
 
         b = self.brain
         for x in xrange(b.hidSize):
-            res += '\tNode'+str(x+11)+';\n'
+            res += '\tNode'+str(x+b.inSize+b.outSize)+'[label="hidden '+str(x)+'"];\n'
         res += '\n'
         for s in b.synapses:
             res += '\tNode'+str(s.fro)+'->Node'+str(s.to)+'[label="'+str(s.w)+'"];\n'

@@ -90,13 +90,13 @@ class Environment(object):
         self.selected = -1
         
         self.generation = 1
-        self.nodeMutRate   = .7
-        self.connMutRate   = .8
-        self.weightMutRate = .75
-        self.enableRate    = .4
+        self.nodeMutRate   = .4
+        self.connMutRate   = .6
+        self.weightMutRate = .5
+        self.enableRate    = .25
 
         self.species = []
-        self.compatThresh = 2
+        self.compatThresh = 3
         self.c1           = 1
         self.c2           = 1
         self.c3           = .4
@@ -178,6 +178,7 @@ class Environment(object):
             f = open('brain.dot', 'w')
             f.write(self.orgs[self.selected].toGraph())
             f.close()
+            print 'Saved brain in "brain.dot"'
 
     def stepPopulation(self, dt):
         #Update species
@@ -237,14 +238,14 @@ class Environment(object):
                                 chld.conn[-1].innov = innov.innov
                                 ConnectGene.numInnovations -= 1
                         innovations += chld.conn[-2:]
-                elif rng.random() < self.connMutRate:
+                if rng.random() < self.connMutRate:
                     newInnov = chld.mutateAddConnection()
                     for innov in innovations:
                         if innov.to == newInnov.to and innov.fro == newInnov.fro:
                             chld.conn[-1].innov = innov.innov
                             ConnectGene.numInnovations -= 1
                     innovations += [chld.conn[-1]]
-                elif rng.random() < self.weightMutRate and len(chld.conn) > 0:
+                if rng.random() < self.weightMutRate and len(chld.conn) > 0:
                     chld.conn[rng.choice(range(len(chld.conn)))].w += rng.random()/8
                     
                 newPop += [Organism(genome=chld)]
