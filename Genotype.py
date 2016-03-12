@@ -35,9 +35,18 @@ class Genotype(object):
         [net.addSynapse(s.fro, s.to, s.w) for s in self.conn if s.on]
         return net
 
+    def areConnected(self, fro, to):
+        for c in self.conn:
+            if (c.fro, c.to) == (fro, to) and c.on:
+                return True
+        return False
+
     def mutateAddConnection(self):
-        fromIndex = rng.randint(0,self.size()-1)
-        toIndex = rng.randint(self.inSize, self.size()-1)
+        fromIndex = rng.randrange(0,self.size())
+        toIndex = rng.randrange(self.inSize, self.size())
+        while self.areConnected(fromIndex, toIndex):
+            fromIndex = rng.randrange(0,self.size())
+            toIndex = rng.randrange(self.inSize, self.size())
         weight = rng.gauss(0, 1)
         return self.addConnection(fromIndex, toIndex, weight, True)
 

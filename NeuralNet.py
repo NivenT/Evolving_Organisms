@@ -27,11 +27,11 @@ class NeuralNet(object):
                 self.activations[:self.inSize] = x
                 
                 for s in self.synapses:
-                        # newState[s.to] += np.tanh(self.activations[s.fro]*s.w + self.biasVector[s.to-self.inSize])
-                        newState[s.to] += np.tanh(self.activations[s.fro]*s.w)
+                        # newState[s.to] += self.activations[s.fro]*s.w + self.biasVector[s.to-self.inSize]
+                        newState[s.to] += self.activations[s.fro]*s.w
                         
-                self.activations[self.inSize:] = newState[self.inSize:]
-                return newState[self.inSize:self.inSize+self.outSize]
+                self.activations[self.inSize:] = np.tanh(newState[self.inSize:])
+                return self.activations[self.inSize:self.inSize+self.outSize]
 
         def addNeuron(self):
                 # self.biasVector = np.append(self.biasVector, [bias])

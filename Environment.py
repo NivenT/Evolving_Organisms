@@ -90,9 +90,9 @@ class Environment(object):
         self.selected = -1
         
         self.generation = 1
-        self.nodeMutRate   = .4
-        self.connMutRate   = .6
-        self.weightMutRate = .5
+        self.nodeMutRate   = .2
+        self.connMutRate   = .4
+        self.weightMutRate = .05
         self.enableRate    = .25
 
         self.species = []
@@ -238,16 +238,16 @@ class Environment(object):
                                 chld.conn[-1].innov = innov.innov
                                 ConnectGene.numInnovations -= 1
                         innovations += chld.conn[-2:]
-                if rng.random() < self.connMutRate:
+                elif rng.random() < self.connMutRate:
                     newInnov = chld.mutateAddConnection()
                     for innov in innovations:
                         if innov.to == newInnov.to and innov.fro == newInnov.fro:
                             chld.conn[-1].innov = innov.innov
                             ConnectGene.numInnovations -= 1
                     innovations += [chld.conn[-1]]
-                if rng.random() < self.weightMutRate and len(chld.conn) > 0:
-                    chld.conn[rng.choice(range(len(chld.conn)))].w += rng.random()/8
-                    
+                for c in chld.conn:
+                    if rng.random() < self.weightMutRate:
+                        c.w += (rng.random()-.5)/4
                 newPop += [Organism(genome=chld)]
             s = Species(rng.choice(s.members))
 
