@@ -35,7 +35,7 @@ class Organism(object):
         self.tailLength = 18
         self.color      = (255,255,0)
 
-        self.genome = args.get('genome', Genotype(7,2,0))
+        self.genome = args.get('genome', Genotype(3,2,0))
         self.brain = self.genome.makeNet()
     def getColor(self):
         return map(lambda x: x*(1./50*self.hunger-1./10000*self.hunger*self.hunger),
@@ -78,15 +78,11 @@ class Organism(object):
     # Returns a string represeing a graphviz graph of the organism's brain
     def toGraph(self):
         res = 'digraph {\n'
-        res += '\tNode0[label="left red smell (input)"];\n'
-        res += '\tNode1[label="left green smell (input)"];\n'
-        res += '\tNode2[label="left blue smell (input)"];\n'
-        res += '\tNode3[label="right red smell (input)"];\n'
-        res += '\tNode4[label="right green smell (input)"];\n'
-        res += '\tNode5[label="right blue smell (input)"];\n'
-        res += '\tNode6[label="hunger (input)"];\n'
-        res += '\tNode7[label="angular speed (output)"];\n'
-        res += '\tNode8[label="speed (output)"];\n'
+        res += '\tNode0[label="left smell (input)"];\n'
+        res += '\tNode1[label="right smell (input)"];\n'
+        res += '\tNode2[label="hunger (input)"];\n'
+        res += '\tNode3[label="angular speed (output)"];\n'
+        res += '\tNode4[label="speed (output)"];\n'
 
         b = self.brain
         for x in xrange(b.hidSize):

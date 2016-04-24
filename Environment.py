@@ -101,6 +101,9 @@ class Environment(object):
         self.c2           = 1
         self.c3           = .4
 
+        self.percentBred = .85
+        self.percentBest = .1
+
     def draw(self, screen):
         if self.selected > -1:
             self.orgs[self.selected].color = (0,0,255)
@@ -130,31 +133,18 @@ class Environment(object):
                 org.hunger = 0 #Kill organisms that move too far away
             elif abs(org.hunger-100) < 100:
                 anyAlive = True
-                
-                leftSmells = rightSmells = [0]*3
+                leftSmell = rightSmell = 0
                 for food in self.food:
                     combinedRadii = food.radius+org.radius
                     dist = distSquared(food.center,org.center)
                     if dist < combinedRadii*combinedRadii:
                         org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
                         self.food.remove(food)
-                    elif dist < 15000:
-                        leftSmells[food.type] += np.exp(-distSquared(food.center,org.getLeftNostril())/5000)
-                        rightSmells[food.type] += np.exp(-distSquared(food.center,org.getRightNostril())/5000)
-                org.update(leftSmells+rightSmells, dt)
-                """
-                minDist, ang = [50]*3, [0]*3
-                for food in self.food:
-                    dist2 = distSquared(food.center,org.center)
-                    if dist2 < (food.radius+org.radius)*(food.radius+org.radius):
-                        org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
-                        self.food.remove(food)
-                    elif dist2 < minDist[food.type]*minDist[food.type]:
-                        minDist[food.type] = np.sqrt(dist2)
-                        direction = move(food.center,scale(org.center,-1))
-                        ang[food.type] = angBetween(direction,[1,0])
-                org.update(minDist+ang, dt)
-                """
+                    elif dist < 18000:
+                        coeff = {0: -2, 1: 1, 2: 3}[food.type]
+                        leftSmell  += coeff*np.exp(-distSquared(food.center,org.getLeftNostril())/5000)
+                        rightSmell += coeff*np.exp(-distSquared(food.center,org.getRightNostril())/5000)
+                org.update([leftSmell, rightSmell], dt)
         return anyAlive
 
     def update(self, dt):
@@ -212,7 +202,7 @@ class Environment(object):
         newPop = []
         innovations = []
         for s in self.species:
-            s.numOffsprings = int(ceil(len(self.orgs)*s.totFit/totFit))
+            s.numOffsprings = int(ceil(self.percentBred*len(self.orgs)*s.totFit/totFit))
             for x in xrange(s.numOffsprings):
                 rand, index = rng.uniform(0, s.totFit), 0
                 while s.members[index].genome.fit < rand:
@@ -251,6 +241,13 @@ class Environment(object):
                 newPop += [Organism(genome=chld)]
             s = Species(rng.choice(s.members))
 
+        #Keep the best organisms from the last generation
+        numBest = ceil(self.percentBest*len(self.orgs))
+        newPop += sorted([m for m in s.members for s in self.species], key=lambda x: x.genome.fit)[-10:]
+
+        #Add in random organisms
+        newPop += [Organism() for x in xrange(len(self.orgs)-len(newPop))]
+        
         print '\tFittest organism alive for', int(max([org.age for org in self.orgs])/dt), 'frames'
         print '\t', ConnectGene.numInnovations, 'total innovations thus far'
         print '\tNumber of species:', len(self.species)
