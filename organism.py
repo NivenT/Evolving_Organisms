@@ -22,8 +22,8 @@ def flatten(lst):
         return [lst[0]]+flatten(lst[1:])
 
 class Organism(object):
-    def __init__(self,**args):
-        self.center = (int(rnd.uniform(0,800)), int(rnd.uniform(0,600)))
+    def __init__(self,dim,**args):
+        self.center = (int(rnd.uniform(0,dim[0])), int(rnd.uniform(0,dim[1])))
         self.orientation = 0
         self.speed = 20
         self.angSpeed = 0
@@ -50,22 +50,23 @@ class Organism(object):
         return move(self.center,scale(noseDir,self.radius+self.noseLength))
     def getGenome(self):
         return self.genome
-    def draw(self, screen):
+    def draw(self, screen, screenCenter, trueCenter):
         Black = (0,0,0)
+        shift = (trueCenter[0]-screenCenter[0],trueCenter[1]-screenCenter[1])
         #Draw main body
-        pg.draw.circle(screen, self.getColor(), map(int,self.center), self.radius)
+        pg.draw.circle(screen, self.getColor(), move(map(int,self.center),shift), self.radius)
         #Draw tail
-        tailStart = move(self.center,scale(self.getForward(),-self.radius))
+        tailStart = move(move(self.center,scale(self.getForward(),-self.radius)),shift)
         tailEnd = move(tailStart,scale(self.getForward(),-self.tailLength))
         pg.draw.line(screen, Black, tailStart, tailEnd)
         #Draw right nostril
         noseDir = rotate(self.getForward(),np.pi/4)
-        noseStart = move(self.center,scale(noseDir,self.radius))
+        noseStart = move(move(self.center,shift),scale(noseDir,self.radius))
         noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
         #Draw left nostril
         noseDir = rotate(self.getForward(),-np.pi/4)
-        noseStart = move(self.center,scale(noseDir,self.radius))
+        noseStart = move(move(self.center,shift),scale(noseDir,self.radius))
         noseEnd = move(noseStart,scale(noseDir,self.noseLength))
         pg.draw.line(screen, Black, noseStart, noseEnd)
     def update(self, smells, dt):
@@ -89,7 +90,7 @@ class Organism(object):
             res += '\tNode'+str(x+b.inSize+b.outSize)+'[label="hidden '+str(x)+'"];\n'
         res += '\n'
         for s in b.synapses:
-            res += '\tNode'+str(s.fro)+'->Node'+str(s.to)+'[label="'+str(s.w)+'"];\n'
+            res += '\tNode'+str(s.fro)+'->Node'+str(s.to)+'[label="'+str(round(s.w,2))+'"];\n'
         res += '}'
         return res
                                

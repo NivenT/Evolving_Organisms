@@ -32,7 +32,12 @@ class Genotype(object):
 
     def makeNet(self):
         net = NeuralNet(self.inSize, self.outSize, self.hidSize)
-        [net.addSynapse(s.fro, s.to, s.w) for s in self.conn if s.on]
+        weights = [[0]*self.size() for i in xrange(self.size())]
+        for c in self.conn:
+            weights[c.fro][c.to] += c.w if c.on else 0
+        for i in xrange(self.size()):
+            for j in xrange(self.size()):
+                net.addSynapse(i,j,weights[i][j]) if weights[i][j] != 0 else 0        #[net.addSynapse(s.fro, s.to, s.w) for s in self.conn if s.on]
         return net
 
     def areConnected(self, fro, to):
@@ -79,8 +84,10 @@ class Genotype(object):
             elif mom[i].innov < dad[j].innov and mate.fit >= self.fit:
                 chld += [mom[i]]
                 i += 1
-            else:
+            elif mate.fit <= self.fit:
                 chld += [dad[j]]
+                j += 1
+            else:
                 j += 1
         if   i < len(mom) and mate.fit >= self.fit:
             chld += mom[i:]

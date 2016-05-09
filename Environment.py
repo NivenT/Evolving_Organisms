@@ -12,14 +12,15 @@ def angBetween(vec1, vec2):
     return np.arccos(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))
 
 class Food(object):
-    def __init__(self):
-        self.center = (int(rnd.uniform(0,800)), int(rnd.uniform(0,600)))
+    def __init__(self, dim):
+        self.center = (int(rnd.uniform(0,dim[0])), int(rnd.uniform(0,dim[1])))
         self.radius = 3
         self.type = int(round(rnd.uniform(0,2)))
         self.color = {0: (255,0,0), 1: (0,255,0), 2: (0,0,255)}[self.type]
         self.lifespan = rnd.randint(50,200)
-    def draw(self, screen):
-        pg.draw.circle(screen, self.color, self.center, self.radius)
+    def draw(self, screen, screenCenter, trueCenter):
+        shift = (trueCenter[0]-screenCenter[0],trueCenter[1]-screenCenter[1])
+        pg.draw.circle(screen, self.color, move(self.center,shift), self.radius)
     def update(self, dt):
         self.lifespan -= dt
 
@@ -44,7 +45,6 @@ class Species(object):
 
         numExcess = 0
         numDisjoint = 0
-        numSame = 0
         totWeightDist = 0
 
         maxInnov = b[-1].innov
@@ -55,7 +55,6 @@ class Species(object):
                 for j in xrange(len(b)):
                     if a[i].innov == b[j].innov:
                         totWeightDist += abs(a[i].w-b[j].w)
-                        numSame += 1
                         numDisjoint -= 1
                         break
                 numDisjoint += 1
@@ -68,12 +67,16 @@ class Species(object):
                 for i in xrange(len(a)):
                     if b[j].innov == a[i].innov:
                         totWeightDist += abs(b[j].w-a[i].w)
-                        numSame += 1
                         numDisjoint -= 1
                         break
                 numDisjoint += 1
 
+        numSame = (len(a)+len(b)-numExcess-numDisjoint)/2
+        #print 'excess:', numExcess, '| disjoint:', numDisjoint, '| numSame:', numSame
+
         n = max(len(a), len(b))
+        #n = 1 if n < 20 else n #n is 1 for small genomes
+        
         if numSame == 0:
             res = c1*numExcess/n + c2*numDisjoint/n
         else:
@@ -82,38 +85,42 @@ class Species(object):
         
         
 class Environment(object):
-    def __init__(self):
-        self.orgs = [Organism() for x in xrange(30)]
-        self.food = [Food() for x in xrange(40)]
+    def __init__(self, screen):
+        self.dimensions = (screen.width, screen.height)
+        self.center = map(int,(screen.width/2,screen.height/2))
+        self.numFood = 150
+        
+        self.orgs = [Organism(self.dimensions) for x in xrange(100)]
+        self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
         self.foodTimer = 800
         self.start = clock()
         self.selected = -1
         
         self.generation = 1
-        self.nodeMutRate   = .2
-        self.connMutRate   = .4
-        self.weightMutRate = .05
-        self.enableRate    = .25
+        self.nodeMutRate   = .4
+        self.connMutRate   = .6
+        self.weightMutRate = .25
+        self.enableRate    = .45
 
         self.species = []
-        self.compatThresh = 3
+        self.compatThresh = 3.5
         self.c1           = 1
         self.c2           = 1
-        self.c3           = .4
+        self.c3           = 2
 
         self.percentBred = .85
         self.percentBest = .1
 
-    def draw(self, screen):
+    def draw(self, screen, screenCenter):
         if self.selected > -1:
             self.orgs[self.selected].color = (0,0,255)
         for org in self.orgs:
             if abs(org.hunger-100) < 100:
-                org.draw(screen)
+                org.draw(screen, screenCenter, self.center)
         if self.selected > -1:
             self.orgs[self.selected].color = (255,255,0)
         for food in self.food:
-            food.draw(screen)
+            food.draw(screen, screenCenter, self.center)
 
     def updateFood(self, dt):
         for food in self.food:
@@ -123,13 +130,13 @@ class Environment(object):
         self.foodTimer -= 1
         if self.foodTimer <= 0:
             # Lower food supplies cause less food to be generated
-            self.food += [Food() for x in xrange(rnd.randint(1,min(10, len(self.food))))]
+            self.food += [Food(self.dimensions) for x in xrange(rnd.randint(1,min(10, len(self.food))))]
             self.foodTimer = 800
 
     def updateOrgs(self, dt):
         anyAlive = False
         for org in self.orgs:
-            if distSquared((400,300), org.center) > 800*800:
+            if distSquared(self.center, org.center) > (2*max(self.dimensions)/3)**2:
                 org.hunger = 0 #Kill organisms that move too far away
             elif abs(org.hunger-100) < 100:
                 anyAlive = True
@@ -155,10 +162,13 @@ class Environment(object):
             print 'Generation', self.generation
             print "\tPopulation survived for", durr/60, "minutes and", durr%60, "seconds"
             self.stepPopulation(dt)
+            return True
+        return False
 
-    def checkClick(self, pos):
+    def checkClick(self, pos, screenCenter):
         self.selected = -1
         squaredRadius = self.orgs[0].radius*self.orgs[0].radius
+        pos = move(pos, (screenCenter[0]-self.center[0],screenCenter[1]-self.center[1]))
         for x in xrange(len(self.orgs)):
             if distSquared(self.orgs[x].center, pos) < squaredRadius:
                 self.selected = x
@@ -190,11 +200,10 @@ class Environment(object):
                     
         #Determine the fitness of each organism
         totFit = 0
-        minAge = min([org.age for org in self.orgs])
         for s in self.species:
             s.totFit = 0.
             for org in s.members:
-                org.genome.fit = (org.age-minAge)/float(s.size())
+                org.genome.fit = org.age/float(s.size())
                 s.totFit += org.genome.fit
             totFit += s.totFit
 
@@ -219,34 +228,45 @@ class Environment(object):
                 chld = dad.genome.cross(mom.genome, self.enableRate)
                 if rng.random() < self.nodeMutRate:
                     newInnovs = chld.mutateAddNode()
+
                     if len(newInnovs) > 0:
+                        foundMatch = [False, False]
                         for innov in innovations:
-                            if innov.to == newInnovs[0].to and innov.fro == newInnovs[0].fro:
+                            if not foundMatch[0] and innov.to == newInnovs[0].to and innov.fro == newInnovs[0].fro:
                                 chld.conn[-2].innov = innov.innov
                                 ConnectGene.numInnovations -= 1
-                            elif innov.to == newInnovs[1].to and innov.fro == newInnovs[1].fro:
+                                foundMatch[0] = True
+                            elif not foundMatch[1] and innov.to == newInnovs[1].to and innov.fro == newInnovs[1].fro:
                                 chld.conn[-1].innov = innov.innov
                                 ConnectGene.numInnovations -= 1
-                        innovations += chld.conn[-2:]
+                                foundMatch[1] = True
+                        innovations += [chld.conn[-2+x] for x in [0,1] if not foundMatch[0]]
+                    
                 elif rng.random() < self.connMutRate:
                     newInnov = chld.mutateAddConnection()
+
+                    foundMatch = False
                     for innov in innovations:
                         if innov.to == newInnov.to and innov.fro == newInnov.fro:
                             chld.conn[-1].innov = innov.innov
                             ConnectGene.numInnovations -= 1
-                    innovations += [chld.conn[-1]]
+                            foundMatch = True
+                            break
+                    if not foundMatch:
+                        innovations += [chld.conn[-1]]
+                    
                 for c in chld.conn:
                     if rng.random() < self.weightMutRate:
                         c.w += (rng.random()-.5)/4
-                newPop += [Organism(genome=chld)]
+                newPop += [Organism(self.dimensions,genome=chld)]
             s = Species(rng.choice(s.members))
 
         #Keep the best organisms from the last generation
-        numBest = ceil(self.percentBest*len(self.orgs))
-        newPop += sorted([m for m in s.members for s in self.species], key=lambda x: x.genome.fit)[-10:]
+        numBest = int(ceil(self.percentBest*len(self.orgs)))
+        newPop += sorted([m for m in s.members for s in self.species], key=lambda x: x.genome.fit)[-numBest:]
 
         #Add in random organisms
-        newPop += [Organism() for x in xrange(len(self.orgs)-len(newPop))]
+        newPop += [Organism(self.dimensions) for x in xrange(len(self.orgs)-len(newPop))]
         
         print '\tFittest organism alive for', int(max([org.age for org in self.orgs])/dt), 'frames'
         print '\t', ConnectGene.numInnovations, 'total innovations thus far'
@@ -261,7 +281,7 @@ class Environment(object):
         """
         rng.shuffle(newPop)
         self.orgs = newPop[:len(self.orgs)]
-        self.food = [Food() for x in xrange(40)]
+        self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
         self.start = clock()
         self.selected = -1
         self.generation += 1

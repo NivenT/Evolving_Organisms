@@ -13,27 +13,42 @@ class Screen(object):
         self.fps = 60
         self.paused = False
 
-        self.env = Environment()
+        self.width = 2000
+        self.height = 2000
+        self.center = map(int,(self.width/2,self.height/2))
 
-    def handleEvent(self, event):
-        if event.type == QUIT:
-            self.gameOver = True
-        elif event.type == MOUSEBUTTONDOWN:
-            mousePos = pg.mouse.get_pos()
-            self.env.checkClick(mousePos)
-        elif event.type == KEYDOWN:
-            if event.key == K_s:
-                self.env.saveSelected()
-            elif event.key == K_p:
-                self.paused = not self.paused
+        self.env = Environment(self)
+
+    def handleEvents(self):
+        for event in pg.event.get():
+            if event.type == QUIT:
+                self.gameOver = True
+            elif event.type == MOUSEBUTTONDOWN:
+                mousePos = pg.mouse.get_pos()
+                self.env.checkClick(mousePos, self.center)
+            elif event.type == KEYDOWN:
+                if event.key == K_s:
+                    self.env.saveSelected()
+                elif event.key == K_p:
+                    self.paused = not self.paused
+        keysPressed = pg.key.get_pressed()
+        if keysPressed[K_UP]:
+            self.center[1] -= 2
+        elif keysPressed[K_DOWN]:
+            self.center[1] += 2
+        if keysPressed[K_LEFT]:
+            self.center[0] -= 2
+        elif keysPressed[K_RIGHT]:
+            self.center[0] += 2
 
     def display(self):
         self.screen.blit(self.background, (0,0))
-        self.env.draw(self.screen)
+        self.env.draw(self.screen, self.center)
         pg.display.flip()
 
     def update(self):
-        self.env.update(self.dt)
+        if self.env.update(self.dt):
+            self.center = map(int,(self.width/2,self.height/2))
 
     def begin(self):
         self.time = clock()
@@ -46,8 +61,7 @@ class Screen(object):
     def loop(self):
         while not self.gameOver:
             self.begin()
-            for event in pg.event.get():
-                self.handleEvent(event)
+            self.handleEvents()
             if not self.paused:
                 self.update()
             self.display()
