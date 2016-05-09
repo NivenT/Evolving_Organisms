@@ -52,7 +52,7 @@ class Organism(object):
         return self.genome
     def draw(self, screen, screenCenter, trueCenter):
         Black = (0,0,0)
-        shift = (trueCenter[0]-screenCenter[0],trueCenter[1]-screenCenter[1])
+        shift = (-screenCenter[0],-screenCenter[1])
         #Draw main body
         pg.draw.circle(screen, self.getColor(), move(map(int,self.center),shift), self.radius)
         #Draw tail

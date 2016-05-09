@@ -19,7 +19,7 @@ class Food(object):
         self.color = {0: (255,0,0), 1: (0,255,0), 2: (0,0,255)}[self.type]
         self.lifespan = rnd.randint(50,200)
     def draw(self, screen, screenCenter, trueCenter):
-        shift = (trueCenter[0]-screenCenter[0],trueCenter[1]-screenCenter[1])
+        shift = (-screenCenter[0],-screenCenter[1])
         pg.draw.circle(screen, self.color, move(self.center,shift), self.radius)
     def update(self, dt):
         self.lifespan -= dt
@@ -91,8 +91,8 @@ class Environment(object):
         self.numFood = 150
         
         self.orgs = [Organism(self.dimensions) for x in xrange(100)]
-        self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
-        self.foodTimer = 800
+        #self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
+        self.foodTimer = 0
         self.start = clock()
         self.selected = -1
         
@@ -111,6 +111,29 @@ class Environment(object):
         self.percentBred = .85
         self.percentBest = .1
 
+        self.numSquares = 10
+        self.food = [0]*(self.numSquares*self.numSquares)
+        for i in xrange(self.numSquares):
+            for j in xrange(self.numSquares):
+                self.food[j+i*self.numSquares] = [[(i+.5)*self.dimensions[0]/self.numSquares, (j+.5)*self.dimensions[1]/self.numSquares],[]]
+        self.diagSquared = (self.dimensions[0]*self.dimensions[0]+self.dimensions[1]*self.dimensions[1])/(4*self.numSquares*self.numSquares)
+        self.genFood(self.numFood)
+
+        #print 'diag^2:',self.diagSquared
+
+    def genFood(self, num):
+        for x in xrange(num):
+            f = Food(self.dimensions)
+            i = self.getSquare(f.center)
+            self.food[i][1] += [f]
+
+    def getSquare(self, pos):
+        for i in xrange(self.numSquares):
+            for j in xrange(self.numSquares):
+                if pos[0] < (i+1)*self.dimensions[0]/self.numSquares and pos[1] < (j+1)*self.dimensions[1]/self.numSquares:
+                    return j + i*self.numSquares
+        return -1
+
     def draw(self, screen, screenCenter):
         if self.selected > -1:
             self.orgs[self.selected].color = (0,0,255)
@@ -119,19 +142,24 @@ class Environment(object):
                 org.draw(screen, screenCenter, self.center)
         if self.selected > -1:
             self.orgs[self.selected].color = (255,255,0)
-        for food in self.food:
-            food.draw(screen, screenCenter, self.center)
+        for square in self.food:
+            #shift = (self.center[0]-screenCenter[0],self.center[1]-screenCenter[1])
+            #pg.draw.circle(screen, (255,0,255), move(map(int,square[0]),shift), 5)
+            for food in square[1]:
+                food.draw(screen, screenCenter, self.center)
 
     def updateFood(self, dt):
-        for food in self.food:
-            food.update(dt)
-            if 0 > food.lifespan:
-                self.food.remove(food)
-        self.foodTimer -= 1
+        for square in self.food:
+            for food in square[1]:
+                food.update(dt)
+                if 0 > food.lifespan:
+                    square[1].remove(food)
+        self.foodTimer -= dt
         if self.foodTimer <= 0:
             # Lower food supplies cause less food to be generated
-            self.food += [Food(self.dimensions) for x in xrange(rnd.randint(1,min(10, len(self.food))))]
-            self.foodTimer = 800
+            numFood = len([f for f in square[1] for square in self.food])
+            self.genFood(rnd.randint(1,min(10,numFood+1)))
+            self.foodTimer = 100
 
     def updateOrgs(self, dt):
         anyAlive = False
@@ -141,16 +169,19 @@ class Environment(object):
             elif abs(org.hunger-100) < 100:
                 anyAlive = True
                 leftSmell = rightSmell = 0
-                for food in self.food:
-                    combinedRadii = food.radius+org.radius
-                    dist = distSquared(food.center,org.center)
-                    if dist < combinedRadii*combinedRadii:
-                        org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
-                        self.food.remove(food)
-                    elif dist < 18000:
-                        coeff = {0: -2, 1: 1, 2: 3}[food.type]
-                        leftSmell  += coeff*np.exp(-distSquared(food.center,org.getLeftNostril())/5000)
-                        rightSmell += coeff*np.exp(-distSquared(food.center,org.getRightNostril())/5000)
+                threshold = (3+org.radius)*(3+org.radius)
+                for square in self.food:
+                    dist = distSquared(square[0],org.center)
+                    if dist < self.diagSquared:
+                        for food in square[1]:
+                            dist = distSquared(food.center, org.center)
+                            if dist < threshold:
+                                org.hunger += {0: -10, 1: 5, 2: 15}[food.type]
+                                square[1].remove(food)
+                            elif dist < 18000:
+                                coeff = {0: -2, 1: 1, 2: 3}[food.type]
+                                leftSmell  += coeff*np.exp(-distSquared(food.center,org.getLeftNostril())/5000)
+                                rightSmell += coeff*np.exp(-distSquared(food.center,org.getRightNostril())/5000)
                 org.update([leftSmell, rightSmell], dt)
         return anyAlive
 
@@ -281,7 +312,8 @@ class Environment(object):
         """
         rng.shuffle(newPop)
         self.orgs = newPop[:len(self.orgs)]
-        self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
+        #self.food = [Food(self.dimensions) for x in xrange(self.numFood)]
+        self.genFood(self.numFood)
         self.start = clock()
         self.selected = -1
         self.generation += 1
